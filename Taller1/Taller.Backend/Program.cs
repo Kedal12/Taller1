@@ -1,5 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Taller.Backend.Data;
+using Taller.Backend.Repositories.Implementations;
+using Taller.Backend.Repositories.Interfaces;
+using Taller.Backend.UnitsOfWork.Implementations;
+using Taller.Backend.UnitsOfWork.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +14,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<DataContext>(x => x.UseSqlServer("name=LocalConnection"));
+
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddScoped<IEmployeeUnitOfWork, EmployeeUnitOfWork>();
 
 var app = builder.Build();
 
