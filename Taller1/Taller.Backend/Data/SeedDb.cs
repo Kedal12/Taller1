@@ -11,7 +11,7 @@ public class SeedDb
         _context = context;
     }
 
-    public async Task SeedDbAsync()
+    public async Task SeedAsync()
     {
         await _context.Database.EnsureCreatedAsync();
         await CheckEmployeesAsync();
