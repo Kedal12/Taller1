@@ -2,84 +2,100 @@
 using Taller.Backend.UnitsOfWork.Interfaces;
 using Taller.Shared.Entities;
 
-namespace Taller.Backend.Controllers
+namespace Taller.Backend.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class EmployeesController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class EmployeesController : ControllerBase
+    private readonly IEmployeeUnitOfWork _unitOfWork;
+
+    public EmployeesController(IEmployeeUnitOfWork unitOfWork)
     {
-        private readonly IEmployeeUnitOfWork _unitOfWork;
+        _unitOfWork = unitOfWork;
+    }
 
-        public EmployeesController(IEmployeeUnitOfWork unitOfWork)
-        {
-            _unitOfWork = unitOfWork;
-        }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAsync()
-        {
-            var action = await _unitOfWork.GetAsync();
-            if (action.WasSuccess)
-            {
-                return Ok(action.Result);
-            }
+    [HttpGet]
+    public async Task<IActionResult> GetAsync()
+    {
+        var action = await _unitOfWork.GetAsync();
+        if (action.WasSuccess)
+            return Ok(action.Result);
+
+        return BadRequest(action.Message);
+    }
+
+
+    [HttpGet("{id:int}", Name = "GetEmployeeById")]
+    public async Task<IActionResult> GetAsync(int id)
+    {
+        var action = await _unitOfWork.GetAsync(id);
+        if (action.WasSuccess)
+            return Ok(action.Result);
+
+        return NotFound(action.Message);
+    }
+
+
+    [HttpPost]
+    public async Task<IActionResult> PostAsync([FromBody] Employee model, CancellationToken ct = default)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var action = await _unitOfWork.AddAsync(model);
+        if (!action.WasSuccess)
             return BadRequest(action.Message);
-        }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetAsync(int id)
-        {
-            var action = await _unitOfWork.GetAsync(id);
-            if (action.WasSuccess)
-            {
-                return Ok(action.Result);
-            }
-            return NotFound(action.Message);
-        }
+ 
+        await _unitOfWork.CommitAsync(ct);
 
-        [HttpPost]
-        public async Task<IActionResult> PostAsync(Employee model)
-        {
-            var action = await _unitOfWork.AddAsync(model);
-            if (action.WasSuccess)
-            {
-                return Ok(action.Result);
-            }
+        var created = action.Result ?? model;
+        return CreatedAtRoute("GetEmployeeById", new { id = created.Id }, created);
+    }
+
+
+    [HttpPut]
+    public async Task<IActionResult> PutAsync([FromBody] Employee model, CancellationToken ct = default)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var action = await _unitOfWork.UpdateAsync(model);
+        if (!action.WasSuccess)
             return BadRequest(action.Message);
-        }
 
-        [HttpPut]
-        public async Task<IActionResult> PutAsync(Employee model)
-        {
-            var action = await _unitOfWork.UpdateAsync(model);
-            if (action.WasSuccess)
-            {
-                return Ok(action.Result);
-            }
+
+        await _unitOfWork.CommitAsync(ct);
+
+        return Ok(action.Result);
+    }
+
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteAsync(int id, CancellationToken ct = default)
+    {
+        var action = await _unitOfWork.DeleteAsync(id);
+        if (!action.WasSuccess)
             return BadRequest(action.Message);
-        }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAsync(int id)
-        {
-            var action = await _unitOfWork.DeleteAsync(id);
-            if (action.WasSuccess)
-            {
-                return NoContent();
-            }
-            return BadRequest(action.Message);
-        }
+        await _unitOfWork.CommitAsync(ct);
 
-        // 🔎 Endpoint específico: búsqueda por letra en nombre o apellido
-        [HttpGet("search-by-letter/{letter}")]
-        public async Task<IActionResult> SearchByLetterAsync(string letter)
-        {
-            var action = await _unitOfWork.SearchByLetterAsync(letter);
-            if (action.WasSuccess)
-            {
-                return Ok(action.Result);
-            }
-            return NotFound(action.Message);
-        }
+        return NoContent();
+    }
+
+
+    [HttpGet("search")]
+    public async Task<IActionResult> SearchByLetterAsync([FromQuery] string q)
+    {
+        if (string.IsNullOrWhiteSpace(q))
+            return BadRequest("Debe ingresar una cadena para buscar.");
+
+        var action = await _unitOfWork.SearchByLetterAsync(q);
+        if (action.WasSuccess)
+            return Ok(action.Result);
+
+        return NotFound(action.Message);
     }
 }

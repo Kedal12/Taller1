@@ -17,29 +17,17 @@ public class EmployeeRepository : IEmployeeRepository
         _entity = context.Set<Employee>();
     }
 
-    public virtual async Task<ActionResponse<Employee>> AddAsync(Employee entity)
+    public Task<ActionResponse<Employee>> AddAsync(Employee entity)
     {
-        _context.Add(entity);
-        try
+        _entity.Add(entity);
+        return Task.FromResult(new ActionResponse<Employee>
         {
-            await _context.SaveChangesAsync();
-            return new ActionResponse<Employee>
-            {
-                WasSuccess = true,
-                Result = entity
-            };
-        }
-        catch (DbUpdateException)
-        {
-            return DbUpdateExceptionActionResponse();
-        }
-        catch (Exception exception)
-        {
-            return ExceptionActionResponse(exception);
-        }
+            WasSuccess = true,
+            Result = entity
+        });
     }
 
-    public virtual async Task<ActionResponse<Employee>> DeleteAsync(int id)
+    public async Task<ActionResponse<Employee>> DeleteAsync(int id)
     {
         var row = await _entity.FindAsync(id);
         if (row == null)
@@ -51,70 +39,35 @@ public class EmployeeRepository : IEmployeeRepository
         }
 
         _entity.Remove(row);
-        try
-        {
-            await _context.SaveChangesAsync();
-            return new ActionResponse<Employee>
-            {
-                WasSuccess = true
-            };
-        }
-        catch
-        {
-            return new ActionResponse<Employee>
-            {
-                Message = "No se puede eliminar el registro porque tiene relaciones con otros registros."
-            };
-        }
+        return new ActionResponse<Employee> { WasSuccess = true };
     }
 
-    public virtual async Task<ActionResponse<Employee>> GetAsync(int id)
+    public async Task<ActionResponse<Employee>> GetAsync(int id)
     {
         var row = await _entity.FindAsync(id);
-        if (row == null)
-        {
-            return new ActionResponse<Employee>
-            {
-                Message = "Registro no encontrado"
-            };
-        }
-        return new ActionResponse<Employee>
-        {
-            WasSuccess = true,
-            Result = row
-        };
+        return row == null
+            ? new ActionResponse<Employee> { Message = "Registro no encontrado" }
+            : new ActionResponse<Employee> { WasSuccess = true, Result = row };
     }
 
-    public virtual async Task<ActionResponse<IEnumerable<Employee>>> GetAsync() =>
+    public async Task<ActionResponse<IEnumerable<Employee>>> GetAsync() =>
         new ActionResponse<IEnumerable<Employee>>
         {
             WasSuccess = true,
             Result = await _entity.ToListAsync()
         };
 
-    public virtual async Task<ActionResponse<Employee>> UpdateAsync(Employee entity)
+    public Task<ActionResponse<Employee>> UpdateAsync(Employee entity)
     {
-        _context.Update(entity);
-        try
+        _entity.Update(entity);
+        return Task.FromResult(new ActionResponse<Employee>
         {
-            await _context.SaveChangesAsync();
-            return new ActionResponse<Employee>
-            {
-                WasSuccess = true,
-                Result = entity
-            };
-        }
-        catch (DbUpdateException)
-        {
-            return DbUpdateExceptionActionResponse();
-        }
-        catch (Exception exception)
-        {
-            return ExceptionActionResponse(exception);
-        }
+            WasSuccess = true,
+            Result = entity
+        });
     }
 
-    public virtual async Task<ActionResponse<IEnumerable<Employee>>> SearchByLetterAsync(string letter)
+    public async Task<ActionResponse<IEnumerable<Employee>>> SearchByLetterAsync(string letter)
     {
         if (string.IsNullOrWhiteSpace(letter))
         {
@@ -125,9 +78,11 @@ public class EmployeeRepository : IEmployeeRepository
             };
         }
 
+        var pattern = $"%{letter}%";
         var result = await _entity
-            .Where(e => e.FirstName.ToLower().Contains(letter.ToLower()) ||
-                        e.LastName.ToLower().Contains(letter.ToLower()))
+            .Where(e =>
+                EF.Functions.Like(e.FirstName, pattern) ||
+                EF.Functions.Like(e.LastName, pattern))
             .ToListAsync();
 
         return new ActionResponse<IEnumerable<Employee>>
@@ -136,15 +91,4 @@ public class EmployeeRepository : IEmployeeRepository
             Result = result
         };
     }
-
-    private ActionResponse<Employee> ExceptionActionResponse(Exception exception) => new ActionResponse<Employee>
-    {
-        Message = exception.Message
-    };
-
-    private ActionResponse<Employee> DbUpdateExceptionActionResponse() =>
-        new ActionResponse<Employee>
-        {
-            Message = "Ya existe el registro."
-        };
 }

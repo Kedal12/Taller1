@@ -1,4 +1,5 @@
-﻿using Taller.Backend.Repositories.Interfaces;
+﻿using Taller.Backend.Data;
+using Taller.Backend.Repositories.Interfaces;
 using Taller.Backend.UnitsOfWork.Interfaces;
 using Taller.Shared.Entities;
 using Taller.Shared.Responses;
@@ -7,28 +8,33 @@ namespace Taller.Backend.UnitsOfWork.Implementations;
 
 public class EmployeeUnitOfWork : IEmployeeUnitOfWork
 {
+    private readonly DataContext _context;
     private readonly IEmployeeRepository _repository;
 
-    public EmployeeUnitOfWork(IEmployeeRepository repository)
+    public EmployeeUnitOfWork(DataContext context, IEmployeeRepository repository)
     {
+        _context = context;
         _repository = repository;
     }
 
-    public virtual async Task<ActionResponse<Employee>> AddAsync(Employee entity) =>
-        await _repository.AddAsync(entity);
+    public Task<ActionResponse<IEnumerable<Employee>>> GetAsync() =>
+        _repository.GetAsync();
 
-    public virtual async Task<ActionResponse<Employee>> DeleteAsync(int id) =>
-        await _repository.DeleteAsync(id);
+    public Task<ActionResponse<Employee>> GetAsync(int id) =>
+        _repository.GetAsync(id);
 
-    public virtual async Task<ActionResponse<Employee>> GetAsync(int id) =>
-        await _repository.GetAsync(id);
+    public Task<ActionResponse<Employee>> AddAsync(Employee entity) =>
+        _repository.AddAsync(entity);
 
-    public virtual async Task<ActionResponse<IEnumerable<Employee>>> GetAsync() =>
-        await _repository.GetAsync();
+    public Task<ActionResponse<Employee>> UpdateAsync(Employee entity) =>
+        _repository.UpdateAsync(entity);
 
-    public virtual async Task<ActionResponse<Employee>> UpdateAsync(Employee entity) =>
-        await _repository.UpdateAsync(entity);
+    public Task<ActionResponse<Employee>> DeleteAsync(int id) =>
+        _repository.DeleteAsync(id);
 
-    public virtual async Task<ActionResponse<IEnumerable<Employee>>> SearchByLetterAsync(string letter) =>
-        await _repository.SearchByLetterAsync(letter);
+    public Task<ActionResponse<IEnumerable<Employee>>> SearchByLetterAsync(string letter) =>
+        _repository.SearchByLetterAsync(letter);
+
+    public Task<int> CommitAsync(CancellationToken ct = default) =>
+        _context.SaveChangesAsync(ct);
 }
