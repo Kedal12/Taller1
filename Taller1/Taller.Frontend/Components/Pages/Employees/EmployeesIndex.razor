@@ -1,0 +1,88 @@
+﻿@page "/employee"
+
+@using MudBlazor
+@using Taller.Shared.Entities
+@using Taller.Frontend.Repositories
+@using Taller.Frontend.Components.Pages.Shared
+@namespace Taller.Frontend.Components.Pages.Employees
+
+@if (loading)
+{
+    <Loading />
+}
+else
+{
+    <MudTable Items="@employees"
+              @ref="table"
+              ServerData="LoadListAsync"
+              Dense="true"
+              Hover="true"
+              Striped="true"
+              FixedHeader="true"
+              FixedFooter="true">
+
+        <ToolBarContent>
+            <div class="d-flex justify-content-between">
+                <MudText Typo="Typo.h6" Class="me-4">Empleados</MudText>
+                <MudButton Variant="Variant.Outlined"
+                           EndIcon="@Icons.Material.Filled.Add"
+                           Color="Color.Info"
+                           OnClick="@(() => ShowModalAsync())">
+                    Nuevo
+                </MudButton>
+            </div>
+            <MudSpacer />
+            <FilterComponent ApplyFilter="SetFilterValue" />
+        </ToolBarContent>
+
+        <HeaderContent>
+            <MudTh>Nombre</MudTh>
+            <MudTh>Activo</MudTh>
+            <MudTh>Ingreso</MudTh>
+            <MudTh>Salario</MudTh>
+            <MudTh style="width:220px;">Acciones</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd>@context.FirstName @context.LastName</MudTd>
+
+            <MudTd>
+                <MudChip T="string" Color="@(context.IsActive ? Color.Success : Color.Default)">
+                    @(context.IsActive ? "Sí" : "No")
+                </MudChip>
+            </MudTd>
+
+            <MudTd>@context.HireDate.ToShortDateString()</MudTd>
+            <MudTd>@context.Salary.ToString("C")</MudTd>
+
+            <MudTd>
+                <MudTooltip Text="Editar">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Warning"
+                               OnClick="@(() => ShowModalAsync(context.Id, true))">
+                        <MudIcon Icon="@Icons.Material.Filled.Edit" />
+                    </MudButton>
+                </MudTooltip>
+
+                <MudTooltip Text="Borrar">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Error"
+                               OnClick="@(() => DeleteAsync(context))">
+                        <MudIcon Icon="@Icons.Material.Filled.Delete" />
+                    </MudButton>
+                </MudTooltip>
+            </MudTd>
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText>No hay registros</MudText>
+        </NoRecordsContent>
+
+        <PagerContent>
+            <MudTablePager RowsPerPageString="Número de registros"
+                           PageSizeOptions="pageSizeOptions"
+                           AllItemsText="Todo"
+                           InfoFormat="@infoFormat" />
+        </PagerContent>
+    </MudTable>
+}

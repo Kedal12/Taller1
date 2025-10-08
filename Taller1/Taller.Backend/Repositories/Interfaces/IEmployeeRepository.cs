@@ -16,4 +16,8 @@ public interface IEmployeeRepository
     Task<ActionResponse<Employee>> UpdateAsync(Employee entity);
 
     Task<ActionResponse<IEnumerable<Employee>>> SearchByLetterAsync(string letter);
+
+    Task<int> GetTotalRecordsAsync(string? filter);
+
+    Task<IEnumerable<Employee>> GetPaginatedAsync(int page, int recordsNumber, string? filter);
 }

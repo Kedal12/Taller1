@@ -37,4 +37,10 @@ public class EmployeeUnitOfWork : IEmployeeUnitOfWork
 
     public Task<int> CommitAsync(CancellationToken ct = default) =>
         _context.SaveChangesAsync(ct);
+
+    public Task<int> GetTotalRecordsAsync(string? filter) =>
+    _repository.GetTotalRecordsAsync(filter);
+
+    public Task<IEnumerable<Employee>> GetPaginatedAsync(int page, int recordsNumber, string? filter) =>
+        _repository.GetPaginatedAsync(page, recordsNumber, filter);
 }

@@ -15,7 +15,6 @@ public class EmployeesController : ControllerBase
         _unitOfWork = unitOfWork;
     }
 
-
     [HttpGet]
     public async Task<IActionResult> GetAsync()
     {
@@ -25,7 +24,6 @@ public class EmployeesController : ControllerBase
 
         return BadRequest(action.Message);
     }
-
 
     [HttpGet("{id:int}", Name = "GetEmployeeById")]
     public async Task<IActionResult> GetAsync(int id)
@@ -37,7 +35,6 @@ public class EmployeesController : ControllerBase
         return NotFound(action.Message);
     }
 
-
     [HttpPost]
     public async Task<IActionResult> PostAsync([FromBody] Employee model, CancellationToken ct = default)
     {
@@ -48,13 +45,11 @@ public class EmployeesController : ControllerBase
         if (!action.WasSuccess)
             return BadRequest(action.Message);
 
- 
         await _unitOfWork.CommitAsync(ct);
 
         var created = action.Result ?? model;
         return CreatedAtRoute("GetEmployeeById", new { id = created.Id }, created);
     }
-
 
     [HttpPut]
     public async Task<IActionResult> PutAsync([FromBody] Employee model, CancellationToken ct = default)
@@ -66,12 +61,10 @@ public class EmployeesController : ControllerBase
         if (!action.WasSuccess)
             return BadRequest(action.Message);
 
-
         await _unitOfWork.CommitAsync(ct);
 
         return Ok(action.Result);
     }
-
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteAsync(int id, CancellationToken ct = default)
@@ -85,7 +78,6 @@ public class EmployeesController : ControllerBase
         return NoContent();
     }
 
-
     [HttpGet("search")]
     public async Task<IActionResult> SearchByLetterAsync([FromQuery] string q)
     {
@@ -97,5 +89,22 @@ public class EmployeesController : ControllerBase
             return Ok(action.Result);
 
         return NotFound(action.Message);
+    }
+
+    [HttpGet("totalRecords")]
+    public async Task<IActionResult> GetTotalRecordsAsync([FromQuery] string? filter = null)
+    {
+        var total = await _unitOfWork.GetTotalRecordsAsync(filter);
+        return Ok(total);
+    }
+
+    [HttpGet("paginated")]
+    public async Task<IActionResult> GetPaginatedAsync(
+        [FromQuery] int page = 1,
+        [FromQuery(Name = "recordsnumber")] int recordsNumber = 10,
+        [FromQuery] string? filter = null)
+    {
+        var list = await _unitOfWork.GetPaginatedAsync(page, recordsNumber, filter);
+        return Ok(list);
     }
 }

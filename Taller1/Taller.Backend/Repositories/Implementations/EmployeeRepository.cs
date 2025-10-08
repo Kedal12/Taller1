@@ -91,4 +91,40 @@ public class EmployeeRepository : IEmployeeRepository
             Result = result
         };
     }
+
+    public async Task<int> GetTotalRecordsAsync(string? filter)
+    {
+        IQueryable<Employee> query = _entity.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            var pattern = $"%{filter}%";
+            query = query.Where(e =>
+                EF.Functions.Like(e.FirstName, pattern) ||
+                EF.Functions.Like(e.LastName, pattern));
+        }
+
+        return await query.CountAsync();
+    }
+
+    public async Task<IEnumerable<Employee>> GetPaginatedAsync(int page, int recordsNumber, string? filter)
+    {
+        if (page <= 0) page = 1;
+        if (recordsNumber <= 0) recordsNumber = 10;
+
+        IQueryable<Employee> query = _entity.AsNoTracking().OrderBy(e => e.LastName).ThenBy(e => e.FirstName);
+
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            var pattern = $"%{filter}%";
+            query = query.Where(e =>
+                EF.Functions.Like(e.FirstName, pattern) ||
+                EF.Functions.Like(e.LastName, pattern));
+        }
+
+        return await query
+            .Skip((page - 1) * recordsNumber)
+            .Take(recordsNumber)
+            .ToListAsync();
+    }
 }
