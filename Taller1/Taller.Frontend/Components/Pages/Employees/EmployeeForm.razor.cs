@@ -1,38 +1,39 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
+﻿using Microsoft.AspNetCore.Components;
 using Taller.Shared.Entities;
 
 namespace Taller.Frontend.Components.Pages.Employees;
 
 public partial class EmployeeForm
 {
-    private EditContext editContext = null!;
-
-    [EditorRequired, Parameter] public Employee Employee { get; set; } = null!;
+    [EditorRequired, Parameter] public Employee Employee { get; set; } = default!;
     [EditorRequired, Parameter] public EventCallback OnValidSubmit { get; set; }
     [EditorRequired, Parameter] public EventCallback ReturnAction { get; set; }
 
-    /// <summary>
-    /// Puente nullable para MudDatePicker (que usa DateTime?) y tu entidad (DateTime no-nullable).
-    /// </summary>
-    private DateTime? HireDateNullable
+    private DateTime? HireDateNullable { get; set; }
+    private bool isActive; // estado local que reflejamos en el modelo
+
+    protected override void OnParametersSet()
     {
-        get => Employee.HireDate == default ? (DateTime?)null : Employee.HireDate;
-        set
-        {
-            if (value.HasValue)
-                Employee.HireDate = value.Value;
-            // Si no viene valor (null) NO pisamos; alternativamente:
-            // else Employee.HireDate = DateTime.Today;
-        }
+        if (Employee is null) Employee = new();
+
+        // Sincroniza estado local con el modelo cada vez que llega el parámetro
+        isActive = Employee.IsActive;
+        HireDateNullable = Employee.HireDate;
     }
 
-    protected override void OnInitialized()
+    private void OnActiveChanged(bool value)
     {
-        // Si viene sin fecha, puedes inicializar aqu� si lo prefieres:
-        if (Employee.HireDate == default)
-            Employee.HireDate = DateTime.Today;
+        isActive = value;
+        Employee.IsActive = value; // 👈 forzamos escribir en el modelo
+        Console.WriteLine($"[DEBUG] OnActiveChanged -> {value}");
+    }
 
-        editContext = new EditContext(Employee);
+    private async Task HandleSubmit()
+    {
+        if (HireDateNullable.HasValue)
+            Employee.HireDate = HireDateNullable.Value;
+
+        Console.WriteLine($"[DEBUG] Submit -> Employee.IsActive={Employee.IsActive}");
+        await OnValidSubmit.InvokeAsync();
     }
 }

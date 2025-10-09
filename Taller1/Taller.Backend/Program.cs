@@ -8,6 +8,13 @@ using Taller.Backend.UnitsOfWork.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddCors(opt =>
+{
+    opt.AddPolicy("frontend", p =>
+        p.WithOrigins("https://localhost:7268")   // <-- PUERTO DEL FRONT
+         .AllowAnyHeader()
+         .AllowAnyMethod());
+});
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -43,7 +50,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseCors("frontend");
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

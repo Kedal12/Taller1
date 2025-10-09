@@ -14,7 +14,7 @@ namespace Taller.Frontend.Components.Pages.Employees
         private readonly int[] pageSizeOptions = { 10, 25, 50, int.MaxValue };
         private int totalRecords = 0;
         private bool loading;
-        private const string baseUrl = "api/employees";
+        private const string baseUrl = "/api/employees";
         private string infoFormat = "{first_item}-{last_item} => {all_items}";
 
         [Inject] private IRepository Repository { get; set; } = null!;
@@ -26,54 +26,85 @@ namespace Taller.Frontend.Components.Pages.Employees
 
         protected override async Task OnInitializedAsync()
         {
-            await LoadTotalRecordsAsync();
+            try
+            {
+                await LoadTotalRecordsAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error inicializando: {ex.Message}", Severity.Error);
+            }
         }
 
         private async Task LoadTotalRecordsAsync()
         {
             loading = true;
-            var url = $"{baseUrl}/totalRecords";
-            if (!string.IsNullOrWhiteSpace(Filter))
-                url += $"?filter={Filter}";
-
-            var response = await Repository.GetAsync<int>(url);
-            if (response.Error)
+            try
             {
-                Snackbar.Add((await response.GetErrorMessageAsync())!, Severity.Error);
-                return;
-            }
+                var url = $"{baseUrl}/totalRecords";
+                if (!string.IsNullOrWhiteSpace(Filter))
+                    url += $"?filter={Filter}";
 
-            totalRecords = response.Response;
-            loading = false;
+                var response = await Repository.GetAsync<int>(url);
+                if (response.Error)
+                {
+                    var msg = await response.GetErrorMessageAsync() ?? "Error consultando el total de registros.";
+                    Snackbar.Add(msg, Severity.Error);
+                    totalRecords = 0;
+                    return;
+                }
+
+                totalRecords = response.Response;
+            }
+            finally
+            {
+                loading = false;
+            }
         }
 
         private async Task<TableData<EmployeeEntity>> LoadListAsync(TableState state, CancellationToken _)
         {
-            int page = state.Page + 1;
-            int pageSize = state.PageSize;
-            var url = $"{baseUrl}/paginated?page={page}&recordsnumber={pageSize}";
-
-            if (!string.IsNullOrWhiteSpace(Filter))
-                url += $"&filter={Filter}";
-
-            var response = await Repository.GetAsync<List<EmployeeEntity>>(url);
-            if (response.Error || response.Response is null)
+            try
             {
-                if (response.Error)
-                    Snackbar.Add((await response.GetErrorMessageAsync())!, Severity.Error);
+                int page = state.Page + 1;
+                int pageSize = state.PageSize == int.MaxValue ? totalRecords : state.PageSize;
 
+                var url = $"{baseUrl}/paginated?page={page}&recordsnumber={pageSize}";
+                if (!string.IsNullOrWhiteSpace(Filter))
+                    url += $"&filter={Filter}";
+
+                var response = await Repository.GetAsync<List<EmployeeEntity>>(url);
+                if (response.Error || response.Response is null)
+                {
+                    var msg = response.Error ? await response.GetErrorMessageAsync() : "Sin datos.";
+                    if (!string.IsNullOrWhiteSpace(msg))
+                        Snackbar.Add(msg!, Severity.Error);
+
+                    employees = new List<EmployeeEntity>();
+                    return new TableData<EmployeeEntity>
+                    {
+                        Items = Array.Empty<EmployeeEntity>(),
+                        TotalItems = 0
+                    };
+                }
+
+                employees = response.Response;
+                return new TableData<EmployeeEntity>
+                {
+                    Items = employees,
+                    TotalItems = totalRecords
+                };
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error cargando la lista: {ex.Message}", Severity.Error);
+                employees = new List<EmployeeEntity>();
                 return new TableData<EmployeeEntity>
                 {
                     Items = Array.Empty<EmployeeEntity>(),
                     TotalItems = 0
                 };
             }
-
-            return new TableData<EmployeeEntity>
-            {
-                Items = response.Response,
-                TotalItems = totalRecords
-            };
         }
 
         private async Task SetFilterValue(string value)
@@ -118,7 +149,6 @@ namespace Taller.Frontend.Components.Pages.Employees
                     Nav.NavigateTo("/employee");
                 else
                     Snackbar.Add((await response.GetErrorMessageAsync())!, Severity.Error);
-
                 return;
             }
 

@@ -15,25 +15,28 @@ public class SeedDb
 
     public async Task SeedAsync()
     {
-        await _context.Database.EnsureCreatedAsync();
+        // Aplica migraciones
+        await _context.Database.MigrateAsync();
+
+        // Si ya hay empleados, no vuelvas a sembrar
+        if (await _context.Employees.AnyAsync())
+            return;
+
         await SeedEmployeesFromSqlAsync();
     }
 
     private async Task SeedEmployeesFromSqlAsync()
     {
-        // ¿Ya hay empleados? No hacemos nada
-        if (await _context.Employees.AnyAsync())
-            return;
-
-        // Ruta del archivo .sql dentro de la salida (bin/...)
-        var sqlPath = Path.Combine(AppContext.BaseDirectory, "Sql", "EmployeesSeed.sql");
+        // Ruta del archivo .sql dentro del proyecto Backend: /Data/Employee.sql
+        var contentRoot = Directory.GetCurrentDirectory();
+        var sqlPath = Path.Combine(contentRoot, "Data", "Employee.sql");
 
         if (!File.Exists(sqlPath))
             throw new FileNotFoundException($"No se encontró el archivo de seed: {sqlPath}");
 
         var sqlScript = await File.ReadAllTextAsync(sqlPath, Encoding.UTF8);
 
-        // Ejecuta el script completo
+        // Ejecuta TODO el script (todos los INSERTs)
         await _context.Database.ExecuteSqlRawAsync(sqlScript);
     }
 }

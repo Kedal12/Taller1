@@ -19,7 +19,7 @@ public partial class EmployeeCreate
 
     private async Task CreateAsync()
     {
-        var resp = await Repository.PostAsync("api/employees", employee);
+        var resp = await Repository.PostAsync("/api/employees", employee);
         if (resp.Error)
         {
             Snackbar.Add((await resp.GetErrorMessageAsync())!, Severity.Error);

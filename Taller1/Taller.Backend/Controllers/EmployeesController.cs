@@ -51,9 +51,12 @@ public class EmployeesController : ControllerBase
         return CreatedAtRoute("GetEmployeeById", new { id = created.Id }, created);
     }
 
-    [HttpPut]
-    public async Task<IActionResult> PutAsync([FromBody] Employee model, CancellationToken ct = default)
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> PutAsync(int id, [FromBody] Employee model, CancellationToken ct = default)
     {
+        if (id != model.Id)
+            return BadRequest("El ID de la URL no coincide con el del cuerpo.");
+
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 

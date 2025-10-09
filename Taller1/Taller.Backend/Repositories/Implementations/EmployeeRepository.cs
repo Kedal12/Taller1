@@ -57,14 +57,23 @@ public class EmployeeRepository : IEmployeeRepository
             Result = await _entity.ToListAsync()
         };
 
-    public Task<ActionResponse<Employee>> UpdateAsync(Employee entity)
+    public async Task<ActionResponse<Employee>> UpdateAsync(Employee entity)
     {
-        _entity.Update(entity);
-        return Task.FromResult(new ActionResponse<Employee>
+        var existing = await _entity.FirstOrDefaultAsync(e => e.Id == entity.Id);
+        if (existing == null)
         {
-            WasSuccess = true,
-            Result = entity
-        });
+            return new ActionResponse<Employee> { Message = "Registro no encontrado" };
+        }
+
+        // Opción A: copiar campo a campo (explícito)
+        existing.FirstName = entity.FirstName;
+        existing.LastName = entity.LastName;
+        existing.IsActive = entity.IsActive;   // 👈 aseguras el bool
+        existing.HireDate = entity.HireDate;
+        existing.Salary = entity.Salary;
+
+        // (SaveChanges lo llamas en CommitAsync desde el UoW/Controller)
+        return new ActionResponse<Employee> { WasSuccess = true, Result = existing };
     }
 
     public async Task<ActionResponse<IEnumerable<Employee>>> SearchByLetterAsync(string letter)

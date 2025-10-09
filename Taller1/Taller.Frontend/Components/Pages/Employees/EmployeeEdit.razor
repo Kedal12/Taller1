@@ -1,4 +1,5 @@
 ﻿@namespace Taller.Frontend.Components.Pages.Employees
+@using Taller.Shared.Entities
 
 @if (employee is null)
 {
@@ -8,7 +9,9 @@ else
 {
     <MudDialog>
         <DialogContent>
-            <EmployeeForm Employee="employee" OnValidSubmit="EditAsync" ReturnAction="Return" />
+            <EmployeeForm Employee="employee"
+                          OnValidSubmit="SaveAsync"
+                          ReturnAction="CloseDialog" />
         </DialogContent>
     </MudDialog>
 }

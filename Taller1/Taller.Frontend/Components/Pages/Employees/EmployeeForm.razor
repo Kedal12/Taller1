@@ -1,57 +1,41 @@
 ﻿@using Microsoft.AspNetCore.Components.Forms
 @using Taller.Shared.Entities
-@namespace Taller.Frontend.Components.Pages.Employees
 
-<EditForm EditContext="editContext" OnValidSubmit="OnValidSubmit">
+<EditForm Model="Employee" OnValidSubmit="HandleSubmit">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
     <MudTextField Label="Nombre"
                   @bind-Value="Employee.FirstName"
-                  For="@(() => Employee.FirstName)"
-                  Required="true"
-                  Class="mb-3" />
+                  For="@(() => Employee.FirstName)" Class="mb-3" />
 
     <MudTextField Label="Apellido"
                   @bind-Value="Employee.LastName"
-                  For="@(() => Employee.LastName)"
-                  Required="true"
-                  Class="mb-3" />
+                  For="@(() => Employee.LastName)" Class="mb-3" />
 
-    <!-- FIX: especificar el genérico -->
+    <!-- El booleano debe ir con Checked -->
+    <!-- Muestra el valor enlazado para depurar -->
+    <MudText Class="mb-1">Debug IsActive: @isActive</MudText>
+
+    <!-- En lugar de @bind-Checked, usa Checked/CheckedChanged explícitos -->
     <MudCheckBox T="bool"
-                 @bind-Checked="Employee.IsActive"
+                 Checked="isActive"
+                 CheckedChanged="OnActiveChanged"
+                 Immediate="true"
                  Class="mb-3">
         Activo
     </MudCheckBox>
 
-    <!-- FIX: MudDatePicker usa DateTime?; bindeamos a una propiedad puente -->
     <MudDatePicker Label="Fecha de Ingreso"
                    @bind-Date="HireDateNullable"
-                   Required="true"
                    Class="mb-3" />
 
-    <MudNumericField T="decimal"
-                     Label="Salario"
+    <MudNumericField T="decimal" Label="Salario"
                      @bind-Value="Employee.Salary"
-                     For="@(() => Employee.Salary)"
-                     Min="0"
-                     Immediate="true"
-                     Class="mb-4" />
+                     For="@(() => Employee.Salary)" Class="mb-4" />
 
     <MudStack Row="true" Spacing="2">
-        <MudButton Variant="Variant.Outlined"
-                   StartIcon="@Icons.Material.Filled.ArrowBack"
-                   Color="Color.Info"
-                   OnClick="ReturnAction">
-            Cancelar
-        </MudButton>
-
-        <MudButton Variant="Variant.Filled"
-                   StartIcon="@Icons.Material.Filled.Check"
-                   Color="Color.Primary"
-                   ButtonType="ButtonType.Submit">
-            Guardar
-        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ReturnAction">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit">Guardar</MudButton>
     </MudStack>
 </EditForm>
