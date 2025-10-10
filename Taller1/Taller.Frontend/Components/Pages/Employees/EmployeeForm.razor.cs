@@ -10,26 +10,23 @@ public partial class EmployeeForm
     [EditorRequired, Parameter] public EventCallback ReturnAction { get; set; }
 
     private DateTime? HireDateNullable { get; set; }
-    private bool isActive; // estado local que reflejamos en el modelo
+    private bool isActive; // estado local para el select
 
     protected override void OnParametersSet()
     {
-        if (Employee is null) Employee = new();
+        if (Employee is null)
+            Employee = new();
 
-        // Sincroniza estado local con el modelo cada vez que llega el parámetro
+        // Sincroniza el estado local con el modelo cada vez que llega el parámetro
         isActive = Employee.IsActive;
         HireDateNullable = Employee.HireDate;
     }
 
-    private void OnActiveChanged(bool value)
-    {
-        isActive = value;
-        Employee.IsActive = value; // 👈 forzamos escribir en el modelo
-        Console.WriteLine($"[DEBUG] OnActiveChanged -> {value}");
-    }
-
     private async Task HandleSubmit()
     {
+        // Copiamos explícitamente del select al modelo
+        Employee.IsActive = isActive;
+
         if (HireDateNullable.HasValue)
             Employee.HireDate = HireDateNullable.Value;
 

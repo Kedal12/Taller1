@@ -13,26 +13,30 @@
                   @bind-Value="Employee.LastName"
                   For="@(() => Employee.LastName)" Class="mb-3" />
 
-    <!-- El booleano debe ir con Checked -->
-    <!-- Muestra el valor enlazado para depurar -->
-    <MudText Class="mb-1">Debug IsActive: @isActive</MudText>
+    <!-- Estado (bool) con MudSelect -->
+    <MudText Class="mb-1">Debug IsActive local: @isActive</MudText>
 
-    <!-- En lugar de @bind-Checked, usa Checked/CheckedChanged explícitos -->
-    <MudCheckBox T="bool"
-                 Checked="isActive"
-                 CheckedChanged="OnActiveChanged"
-                 Immediate="true"
-                 Class="mb-3">
-        Activo
-    </MudCheckBox>
+    <MudSelect T="bool"
+               Label="Estado"
+               @bind-Value="isActive"
+               Required="true"
+               Dense="true"
+               Class="mb-3">
+        <MudSelectItem Value="true">Sí</MudSelectItem>
+        <MudSelectItem Value="false">No</MudSelectItem>
+    </MudSelect>
 
     <MudDatePicker Label="Fecha de Ingreso"
                    @bind-Date="HireDateNullable"
                    Class="mb-3" />
 
-    <MudNumericField T="decimal" Label="Salario"
+    <MudNumericField T="decimal"
+                     Label="Salario"
                      @bind-Value="Employee.Salary"
-                     For="@(() => Employee.Salary)" Class="mb-4" />
+                     For="@(() => Employee.Salary)"
+                     Min="0"
+                     Immediate="true"
+                     Class="mb-4" />
 
     <MudStack Row="true" Spacing="2">
         <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ReturnAction">Cancelar</MudButton>
