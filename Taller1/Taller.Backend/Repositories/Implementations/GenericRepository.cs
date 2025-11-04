@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Taller.Shared.Responses;
+using Taller.Shared.DTOs;
 using Taller.Backend.Data;
 using Taller.Backend.Repositories.Interfaces;
 
@@ -61,6 +62,37 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
 
     public virtual async Task<ActionResponse<IEnumerable<T>>> GetAsync() =>
         new ActionResponse<IEnumerable<T>> { WasSuccess = true, Result = await _entity.ToListAsync() };
+
+
+    public virtual async Task<ActionResponse<IEnumerable<T>>> GetAsync(PaginationDTO pagination)
+    {
+        var query = _entity.AsQueryable();
+
+        var skip = (pagination.Page - 1) * pagination.RecordsNumber;
+        var results = await query
+            .Skip(skip)
+            .Take(pagination.RecordsNumber)
+            .ToListAsync();
+
+        return new ActionResponse<IEnumerable<T>>
+        {
+            WasSuccess = true,
+            Result = results
+        };
+    }
+
+    public virtual async Task<ActionResponse<int>> GetTotalRecordsAsync(PaginationDTO pagination)
+    {
+        var query = _entity.AsQueryable();
+
+        var count = await query.CountAsync();
+
+        return new ActionResponse<int>
+        {
+            WasSuccess = true,
+            Result = count
+        };
+    }
 
     public virtual async Task<ActionResponse<T>> UpdateAsync(T entity)
     {

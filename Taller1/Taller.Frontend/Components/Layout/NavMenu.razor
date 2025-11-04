@@ -1,8 +1,13 @@
 ﻿
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Inicio</MudNavLink> 
-    <MudNavLink Href="employee" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">Empleados</MudNavLink>
-
+    <AuthorizeView Roles="Admin">
+        <Authorized>
+            <MudNavLink Href="categories" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Category">Categorias</MudNavLink>
+            <MudNavLink Href="countries" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Public">Países</MudNavLink>
+            <MudNavLink Href="employee" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">Empleados</MudNavLink>
+        </Authorized>
+    </AuthorizeView>
 </MudNavMenu>
 
 

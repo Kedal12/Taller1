@@ -1,8 +1,8 @@
-using System.Net;
+﻿using System.Net;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using Taller.Frontend.Repositories;
-using Taller.Frontend.Components.Pages.Shared;
+using Taller.Frontend.Components.Shared;
 using EmployeeEntity = Taller.Shared.Entities.Employee;
 
 namespace Taller.Frontend.Components.Pages.Employees
@@ -41,9 +41,19 @@ namespace Taller.Frontend.Components.Pages.Employees
             loading = true;
             try
             {
-                var url = $"{baseUrl}/totalRecords";
-                if (!string.IsNullOrWhiteSpace(Filter))
-                    url += $"?filter={Filter}";
+                string url;
+
+                if (string.IsNullOrWhiteSpace(Filter))
+                {
+                    // SIN filtro → endpoint genérico
+                    url = $"{baseUrl}/totalRecords";
+                }
+                else
+                {
+                    // CON filtro → endpoint específico de empleados
+                    var encoded = Uri.EscapeDataString(Filter);
+                    url = $"{baseUrl}/totalRecordsByFilter?filter={encoded}";
+                }
 
                 var response = await Repository.GetAsync<int>(url);
                 if (response.Error)
@@ -69,9 +79,19 @@ namespace Taller.Frontend.Components.Pages.Employees
                 int page = state.Page + 1;
                 int pageSize = state.PageSize == int.MaxValue ? totalRecords : state.PageSize;
 
-                var url = $"{baseUrl}/paginated?page={page}&recordsnumber={pageSize}";
-                if (!string.IsNullOrWhiteSpace(Filter))
-                    url += $"&filter={Filter}";
+                string url;
+
+                if (string.IsNullOrWhiteSpace(Filter))
+                {
+                    // SIN filtro → endpoint genérico
+                    url = $"{baseUrl}/paginated?page={page}&recordsnumber={pageSize}";
+                }
+                else
+                {
+                    // CON filtro → endpoint específico con filtro
+                    var encoded = Uri.EscapeDataString(Filter);
+                    url = $"{baseUrl}/paginatedByFilter?page={page}&recordsnumber={pageSize}&filter={encoded}";
+                }
 
                 var response = await Repository.GetAsync<List<EmployeeEntity>>(url);
                 if (response.Error || response.Response is null)
@@ -135,8 +155,8 @@ namespace Taller.Frontend.Components.Pages.Employees
         private async Task DeleteAsync(EmployeeEntity employee)
         {
             var dlg = await Dialogs.ShowAsync<ConfirmDialog>(
-                "Confirmaci�n",
-                new DialogParameters { { "Message", $"�Borrar a {employee.FirstName} {employee.LastName}?" } },
+                "Confirmación",
+                new DialogParameters { { "Message", $"¿Borrar a {employee.FirstName} {employee.LastName}?" } },
                 new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, CloseOnEscapeKey = true });
 
             var result = await dlg.Result;
@@ -146,7 +166,7 @@ namespace Taller.Frontend.Components.Pages.Employees
             if (response.Error)
             {
                 if (response.HttpResponseMessage.StatusCode == HttpStatusCode.NotFound)
-                    Nav.NavigateTo("/employee");
+                    Nav.NavigateTo("/employees");
                 else
                     Snackbar.Add((await response.GetErrorMessageAsync())!, Severity.Error);
                 return;

@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Taller.Backend.Controllers;                
+using Taller.Backend.UnitOfWork.Interfaces;      
 using Taller.Backend.UnitsOfWork.Interfaces;
 using Taller.Shared.Entities;
 
@@ -6,80 +10,19 @@ namespace Taller.Backend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class EmployeesController : ControllerBase
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+public class EmployeesController : GenericController<Employee>
 {
-    private readonly IEmployeeUnitOfWork _unitOfWork;
+    private readonly IEmployeeUnitOfWork _employeeUnitOfWork;
 
-    public EmployeesController(IEmployeeUnitOfWork unitOfWork)
+    public EmployeesController(
+        IGenericUnitOfWork<Employee> genericUnitOfWork,
+        IEmployeeUnitOfWork employeeUnitOfWork)
+        : base(genericUnitOfWork)
     {
-        _unitOfWork = unitOfWork;
+        _employeeUnitOfWork = employeeUnitOfWork;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAsync()
-    {
-        var action = await _unitOfWork.GetAsync();
-        if (action.WasSuccess)
-            return Ok(action.Result);
-
-        return BadRequest(action.Message);
-    }
-
-    [HttpGet("{id:int}", Name = "GetEmployeeById")]
-    public async Task<IActionResult> GetAsync(int id)
-    {
-        var action = await _unitOfWork.GetAsync(id);
-        if (action.WasSuccess)
-            return Ok(action.Result);
-
-        return NotFound(action.Message);
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> PostAsync([FromBody] Employee model, CancellationToken ct = default)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var action = await _unitOfWork.AddAsync(model);
-        if (!action.WasSuccess)
-            return BadRequest(action.Message);
-
-        await _unitOfWork.CommitAsync(ct);
-
-        var created = action.Result ?? model;
-        return CreatedAtRoute("GetEmployeeById", new { id = created.Id }, created);
-    }
-
-    [HttpPut("{id:int}")]
-    public async Task<IActionResult> PutAsync(int id, [FromBody] Employee model, CancellationToken ct = default)
-    {
-        if (id != model.Id)
-            return BadRequest("El ID de la URL no coincide con el del cuerpo.");
-
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var action = await _unitOfWork.UpdateAsync(model);
-        if (!action.WasSuccess)
-            return BadRequest(action.Message);
-
-        await _unitOfWork.CommitAsync(ct);
-
-        return Ok(action.Result);
-    }
-
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteAsync(int id, CancellationToken ct = default)
-    {
-        var action = await _unitOfWork.DeleteAsync(id);
-        if (!action.WasSuccess)
-            return BadRequest(action.Message);
-
-        await _unitOfWork.CommitAsync(ct);
-
-        return NoContent();
-    }
 
     [HttpGet("search")]
     public async Task<IActionResult> SearchByLetterAsync([FromQuery] string q)
@@ -87,27 +30,27 @@ public class EmployeesController : ControllerBase
         if (string.IsNullOrWhiteSpace(q))
             return BadRequest("Debe ingresar una cadena para buscar.");
 
-        var action = await _unitOfWork.SearchByLetterAsync(q);
+        var action = await _employeeUnitOfWork.SearchByLetterAsync(q);
         if (action.WasSuccess)
             return Ok(action.Result);
 
         return NotFound(action.Message);
     }
 
-    [HttpGet("totalRecords")]
-    public async Task<IActionResult> GetTotalRecordsAsync([FromQuery] string? filter = null)
+    [HttpGet("totalRecordsByFilter")]
+    public async Task<IActionResult> GetTotalRecordsByFilterAsync([FromQuery] string? filter = null)
     {
-        var total = await _unitOfWork.GetTotalRecordsAsync(filter);
+        var total = await _employeeUnitOfWork.GetTotalRecordsAsync(filter);
         return Ok(total);
     }
 
-    [HttpGet("paginated")]
-    public async Task<IActionResult> GetPaginatedAsync(
+    [HttpGet("paginatedByFilter")]
+    public async Task<IActionResult> GetPaginatedByFilterAsync(
         [FromQuery] int page = 1,
         [FromQuery(Name = "recordsnumber")] int recordsNumber = 10,
         [FromQuery] string? filter = null)
     {
-        var list = await _unitOfWork.GetPaginatedAsync(page, recordsNumber, filter);
+        var list = await _employeeUnitOfWork.GetPaginatedAsync(page, recordsNumber, filter);
         return Ok(list);
     }
 }

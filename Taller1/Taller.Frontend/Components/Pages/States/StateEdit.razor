@@ -1,0 +1,12 @@
+﻿@if (state is null)
+{
+    <Loading />
+}
+else
+{
+    <MudDialog>
+        <DialogContent>
+            <FormWithName Label="Estado:" Model="state" OnValidSubmit="EditAsync" ReturnAction="Return" />
+        </DialogContent>
+    </MudDialog>
+}
