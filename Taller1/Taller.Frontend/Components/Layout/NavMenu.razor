@@ -1,13 +1,30 @@
-﻿
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
 <MudNavMenu>
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Inicio</MudNavLink> 
+    <!-- Inicio, visible para todos -->
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
+        Inicio
+    </MudNavLink>
+
+    <!-- Opciones solo para usuarios con rol Admin -->
     <AuthorizeView Roles="Admin">
         <Authorized>
-            <MudNavLink Href="categories" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Category">Categorias</MudNavLink>
-            <MudNavLink Href="countries" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Public">Países</MudNavLink>
-            <MudNavLink Href="employee" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">Empleados</MudNavLink>
+            <MudNavLink Href="categories" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Category">
+                Categorías
+            </MudNavLink>
+
+            <MudNavLink Href="countries" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Public">
+                Países
+            </MudNavLink>
+
+            <!-- Ruta adaptada a /employee -->
+            <MudNavLink Href="employee" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">
+                Empleados
+            </MudNavLink>
         </Authorized>
+
+        <NotAuthorized>
+            @* Opcional: contenido si no tiene rol Admin *@
+        </NotAuthorized>
     </AuthorizeView>
 </MudNavMenu>
-
-

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+锘縰sing Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -13,10 +13,11 @@ using Taller.Backend.UnitOfWork.Interfaces;
 using Taller.Backend.UnitsOfWork.Implementations;
 using Taller.Backend.UnitsOfWork.Interfaces;
 using Taller.Shared.Entities;
+using Taller.Backend.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ? AGREGADO: Configuraci髇 de CORS
+// ? AGREGADO: Configuraci贸n de CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -34,7 +35,7 @@ builder.Services.AddControllers()
 
 builder.Services.AddEndpointsApiExplorer();
 
-// Configuraci髇 de Swagger con autenticaci髇 JWT
+// Configuraci贸n de Swagger con autenticaci贸n JWT
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Taller Backend", Version = "v1" });
@@ -68,10 +69,21 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // DbContext
-builder.Services.AddDbContext<DataContext>(x => x.UseSqlServer("name=LocalConnection"));
+//builder.Services.AddDbContext<DataContext>(x => x.UseSqlServer("name=LocalConnection"));
+builder.Services.AddDbContext<DataContext>(options =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("LocalConnection");
+
+    options.UseSqlServer(connectionString, sqlOptions =>
+    {
+        // 鈴憋笍 Tiempo m谩ximo de espera para comandos SQL (en segundos)
+        sqlOptions.CommandTimeout(300); // 5 minutos, puedes subir o bajar este valor
+    });
+});
+
 builder.Services.AddTransient<SeedDb>();
 
-// Autenticaci髇 JWT
+// Autenticaci贸n JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(x => x.TokenValidationParameters = new TokenValidationParameters
     {
@@ -83,11 +95,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         ClockSkew = TimeSpan.Zero
     });
 
-// Repositorios gen閞icos
+// Repositorios gen茅ricos
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped(typeof(IGenericUnitOfWork<>), typeof(GenericUnitOfWork<>));
 
-// Repositorios espec韋icos
+// Repositorios espec铆ficos
 builder.Services.AddScoped<ICategoriesRepository, CategoriesRepository>();
 builder.Services.AddScoped<ICitiesRepository, CitiesRepository>();
 builder.Services.AddScoped<ICountriesRepository, CountriesRepository>();
@@ -95,7 +107,7 @@ builder.Services.AddScoped<IStatesRepository, StatesRepository>();
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 
-// Units of Work espec韋icos
+// Units of Work espec铆ficos
 builder.Services.AddScoped<ICategoriesUnitOfWork, CategoriesUnitOfWork>();
 builder.Services.AddScoped<ICitiesUnitOfWork, CitiesUnitOfWork>();
 builder.Services.AddScoped<ICountriesUnitOfWork, CountriesUnitOfWork>();
@@ -103,7 +115,9 @@ builder.Services.AddScoped<IStatesUnitOfWork, StatesUnitOfWork>();
 builder.Services.AddScoped<IEmployeeUnitOfWork, EmployeeUnitOfWork>();
 builder.Services.AddScoped<IUsersUnitOfWork, UsersUnitOfWork>();
 
-// Configuraci髇 de Identity
+builder.Services.AddScoped<IFileStorage, FileStorage>();
+
+// Configuraci贸n de Identity
 builder.Services.AddIdentity<User, IdentityRole>(x =>
 {
     x.User.RequireUniqueEmail = true;
@@ -130,7 +144,7 @@ void SeedData(WebApplication app)
     service!.SeedAsync().Wait();
 }
 
-// Configuraci髇 del pipeline HTTP
+// Configuraci贸n del pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

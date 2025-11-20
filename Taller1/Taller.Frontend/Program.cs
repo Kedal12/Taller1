@@ -3,6 +3,7 @@ using MudBlazor.Services;
 using Taller.Frontend.AuthenticationProviders; // Asegúrate de que este namespace es correcto
 using Taller.Frontend.Components;
 using Taller.Frontend.Repositories;
+using Taller.Frontend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,10 +15,11 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 // 3. HttpClient apuntando a tu API (conservando el puerto 7281)
-builder.Services.AddScoped(_ => new HttpClient
-{
-    BaseAddress = new Uri("https://localhost:7281/") // Puerto de tu Taller.Backend
-});
+builder.Services.AddSingleton(_ => new HttpClient { BaseAddress = new Uri("https://localhost:7281") });
+
+builder.Services.AddScoped<AuthenticationProviderJWT>();
+builder.Services.AddScoped<AuthenticationStateProvider, AuthenticationProviderJWT>(x => x.GetRequiredService<AuthenticationProviderJWT>());
+builder.Services.AddScoped<ILoginService, AuthenticationProviderJWT>(x => x.GetRequiredService<AuthenticationProviderJWT>());
 
 // --- Configuración de Autenticación/Autorización ---
 // Esta es la configuración que funciona en tu proyecto 'Orders'
@@ -28,11 +30,10 @@ builder.Services.AddAuthorizationCore();
 // 5. Registra TU proveedor de autenticación personalizado.
 //    El componente <CascadingAuthenticationState> en App.razor usará este servicio.
 //    Esta línea reemplaza la necesidad de 'AddCascadingAuthenticationState()'.
-builder.Services.AddScoped<AuthenticationStateProvider, AuthenticationProviderTest>();
+//builder.Services.AddScoped<AuthenticationStateProvider, AuthenticationProviderTest>();
 
 // 6. Registra tu repositorio
 builder.Services.AddScoped<IRepository, Repository>();
-
 
 var app = builder.Build();
 
@@ -49,10 +50,9 @@ app.UseHttpsRedirection();
 // para coincidir con la lógica de tu proyecto 'Orders',
 // que delega todo al AuthenticationStateProvider.
 
+app.UseHttpsRedirection();
 app.UseAntiforgery();
 app.MapStaticAssets();
-
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-
 app.Run();
