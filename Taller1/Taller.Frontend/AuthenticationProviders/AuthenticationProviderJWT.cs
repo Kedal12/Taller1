@@ -42,48 +42,23 @@ public class AuthenticationProviderJWT : AuthenticationStateProvider, ILoginServ
         try
         {
             var token = await _jSRuntime.GetLocalStorage(_tokenKey);
-
             if (token is null)
             {
                 return _anonimous;
             }
-
-            // CAMBIO IMPORTANTE: Limpiar comillas y espacios extra
-            string tokenString = token.ToString()!.Trim('"').Trim();
-
-            if (string.IsNullOrEmpty(tokenString))
-            {
-                return _anonimous;
-            }
-
-            return BuildAuthenticationState(tokenString);
+            return BuildAuthenticationState(token.ToString()!);
         }
-        catch
+        catch (InvalidOperationException)
         {
-            // Si ocurre CUALQUIER error (token corrupto, error de lectura, etc.)
-            // Devolvemos anónimo para no romper la app y limpiamos el token malo.
-            try
-            {
-                await _jSRuntime.RemoveLocalStorage(_tokenKey);
-            }
-            catch { /* Ignorar si falla la limpieza */ }
-
             return _anonimous;
         }
     }
 
     private AuthenticationState BuildAuthenticationState(string token)
     {
-        try
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
-            var claims = ParseClaimsFromJWT(token);
-            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(claims, "jwt")));
-        }
-        catch
-        {
-            return _anonimous;
-        }
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+        var claims = ParseClaimsFromJWT(token);
+        return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(claims, "jwt")));
     }
 
     private IEnumerable<Claim> ParseClaimsFromJWT(string token)

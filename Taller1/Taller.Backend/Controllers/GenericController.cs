@@ -7,7 +7,7 @@ namespace Taller.Backend.Controllers;
 
 public class GenericController<T> : Controller where T : class
 {
-    protected readonly IGenericUnitOfWork<T> _unitOfWork;
+    private readonly IGenericUnitOfWork<T> _unitOfWork;
 
     public GenericController(IGenericUnitOfWork<T> unitOfWork)
     {

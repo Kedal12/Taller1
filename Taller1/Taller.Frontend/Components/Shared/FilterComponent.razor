@@ -1,4 +1,4 @@
-﻿<div class="mb-2" style="display:flex;flex-wrap:wrap;align-items:center;">
+﻿<div class="mb-2" style="display: flex; flex-wrap:wrap; align-items: center;">
     <div>
         <MudTextField @bind-Value="FilterValue"
                       Placeholder="Buscar..."
@@ -9,15 +9,15 @@
     <div class="mx-1">
         <MudButton Variant="Variant.Outlined"
                    EndIcon="@Icons.Material.Filled.FilterList"
-                   OnClick="OnFilterApply">
+                   Color="Color.Primary"
+                   @onclick="OnFilterApply">
             Filtrar
         </MudButton>
         <MudButton Variant="Variant.Outlined"
                    EndIcon="@Icons.Material.Filled.Delete"
                    Color="Color.Error"
-                   OnClick="CleanFilter">
+                   @onclick="CleanFilter">
             Limpiar
         </MudButton>
     </div>
 </div>
-

@@ -13,6 +13,8 @@ public partial class FilterComponent
         await ApplyFilter.InvokeAsync(FilterValue);
     }
 
-    private async Task OnFilterApply() =>
+    private async Task OnFilterApply()
+    {
         await ApplyFilter.InvokeAsync(FilterValue);
+    }
 }

@@ -3,6 +3,7 @@ using Taller.Shared.Entities;
 using Taller.Shared.Responses;
 
 namespace Taller.Backend.UnitsOfWork.Interfaces;
+
 public interface ICategoriesUnitOfWork
 {
     Task<IEnumerable<Category>> GetComboAsync();

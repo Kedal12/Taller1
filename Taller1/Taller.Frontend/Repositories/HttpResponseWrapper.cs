@@ -17,20 +17,29 @@ public class HttpResponseWrapper<T>
 
     public async Task<string?> GetErrorMessageAsync()
     {
-        if (!Error) return null;
-
-        var status = HttpResponseMessage.StatusCode;
-        var body = await HttpResponseMessage.Content.ReadAsStringAsync();
-
-        return status switch
+        if (!Error)
         {
-            HttpStatusCode.NotFound => "Recurso no encontrado.",
-            HttpStatusCode.BadRequest => string.IsNullOrWhiteSpace(body) ? "Solicitud inválida." : body,
-            HttpStatusCode.Unauthorized => "Tienes que estar logueado para ejecutar esta operación.",
-            HttpStatusCode.Forbidden => "No tienes permisos para hacer esta operación.",
-            HttpStatusCode.RequestTimeout => "Tiempo de espera agotado.",
-            HttpStatusCode.ServiceUnavailable => $"Servicio no disponible: {body}",
-            _ => $"Error {(int)status} {status}. {(string.IsNullOrWhiteSpace(body) ? "" : body)}"
-        };
+            return null;
+        }
+
+        var statusCode = HttpResponseMessage.StatusCode;
+        if (statusCode == HttpStatusCode.NotFound)
+        {
+            return "Recurso no encontrado.";
+        }
+        if (statusCode == HttpStatusCode.BadRequest)
+        {
+            return await HttpResponseMessage.Content.ReadAsStringAsync();
+        }
+        if (statusCode == HttpStatusCode.Unauthorized)
+        {
+            return "Tienes que estar logueado para ejecutar esta operación.";
+        }
+        if (statusCode == HttpStatusCode.Forbidden)
+        {
+            return "No tienes permisos para hacer esta operación.";
+        }
+
+        return "Ha ocurrido un error inesperado.";
     }
 }

@@ -8,7 +8,10 @@ public partial class Loading
 
     protected override void OnParametersSet()
     {
+        base.OnParametersSet();
         if (string.IsNullOrEmpty(Label))
+        {
             Label = "Por favor espera...";
+        }
     }
 }

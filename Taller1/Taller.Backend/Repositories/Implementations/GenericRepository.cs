@@ -3,112 +3,148 @@ using Taller.Shared.Responses;
 using Taller.Shared.DTOs;
 using Taller.Backend.Data;
 using Taller.Backend.Repositories.Interfaces;
+using Taller.Backend.Helpers;
 
 namespace Taller.Backend.Repositories.Implementations;
 
 public class GenericRepository<T> : IGenericRepository<T> where T : class
 {
-    protected readonly DataContext _context;
-    protected readonly DbSet<T> _entity;
+    private readonly DataContext _context;
+    private readonly DbSet<T> _entity;
 
     public GenericRepository(DataContext context)
     {
         _context = context;
-        _entity = _context.Set<T>();
+        _entity = context.Set<T>();
+    }
+
+    public virtual async Task<ActionResponse<IEnumerable<T>>> GetAsync(PaginationDTO pagination)
+    {
+        var queryable = _entity.AsQueryable();
+
+        return new ActionResponse<IEnumerable<T>>
+        {
+            WasSuccess = true,
+            Result = await queryable
+                .Paginate(pagination)
+                .ToListAsync()
+        };
+    }
+
+    public virtual async Task<ActionResponse<int>> GetTotalRecordsAsync(PaginationDTO pagination)
+    {
+        var queryable = _entity.AsQueryable();
+        double count = await queryable.CountAsync();
+        return new ActionResponse<int>
+        {
+            WasSuccess = true,
+            Result = (int)count
+        };
     }
 
     public virtual async Task<ActionResponse<T>> AddAsync(T entity)
     {
-        _entity.Add(entity);
+        _context.Add(entity);
         try
         {
             await _context.SaveChangesAsync();
-            return new ActionResponse<T> { WasSuccess = true, Result = entity };
+            return new ActionResponse<T>
+            {
+                WasSuccess = true,
+                Result = entity
+            };
         }
         catch (DbUpdateException)
         {
-            return new ActionResponse<T> { Message = "Ya existe el registro." };
+            return DbUpdateExceptionActionResponse();
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return new ActionResponse<T> { Message = ex.Message };
+            return ExceptionActionRespose(exception);
         }
     }
 
     public virtual async Task<ActionResponse<T>> DeleteAsync(int id)
     {
         var row = await _entity.FindAsync(id);
-        if (row == null) return new ActionResponse<T> { Message = "Registro no encontrado" };
-
+        if (row == null)
+        {
+            return new ActionResponse<T>
+            {
+                Message = "Registro no encontrado"
+            };
+        }
         _entity.Remove(row);
+
         try
         {
             await _context.SaveChangesAsync();
-            return new ActionResponse<T> { WasSuccess = true };
+            return new ActionResponse<T>
+            {
+                WasSuccess = true
+            };
         }
         catch
         {
-            return new ActionResponse<T> { Message = "No se puede eliminar el registro porque tiene relaciones." };
+            return new ActionResponse<T>
+            {
+                Message = "No se puede borrar porque tiene registros relacionados."
+            };
         }
     }
 
     public virtual async Task<ActionResponse<T>> GetAsync(int id)
     {
         var row = await _entity.FindAsync(id);
-        return row == null
-            ? new ActionResponse<T> { Message = "Registro no encontrado" }
-            : new ActionResponse<T> { WasSuccess = true, Result = row };
-    }
-
-    public virtual async Task<ActionResponse<IEnumerable<T>>> GetAsync() =>
-        new ActionResponse<IEnumerable<T>> { WasSuccess = true, Result = await _entity.ToListAsync() };
-
-
-    public virtual async Task<ActionResponse<IEnumerable<T>>> GetAsync(PaginationDTO pagination)
-    {
-        var query = _entity.AsQueryable();
-
-        var skip = (pagination.Page - 1) * pagination.RecordsNumber;
-        var results = await query
-            .Skip(skip)
-            .Take(pagination.RecordsNumber)
-            .ToListAsync();
-
-        return new ActionResponse<IEnumerable<T>>
+        if (row == null)
+        {
+            return new ActionResponse<T>
+            {
+                Message = "Registro no encontrado"
+            };
+        }
+        return new ActionResponse<T>
         {
             WasSuccess = true,
-            Result = results
+            Result = row
         };
     }
 
-    public virtual async Task<ActionResponse<int>> GetTotalRecordsAsync(PaginationDTO pagination)
+    public virtual async Task<ActionResponse<IEnumerable<T>>> GetAsync() => new ActionResponse<IEnumerable<T>>
     {
-        var query = _entity.AsQueryable();
-
-        var count = await query.CountAsync();
-
-        return new ActionResponse<int>
-        {
-            WasSuccess = true,
-            Result = count
-        };
-    }
+        WasSuccess = true,
+        Result = await _entity.ToListAsync()
+    };
 
     public virtual async Task<ActionResponse<T>> UpdateAsync(T entity)
     {
-        _entity.Update(entity);
+        _context.Update(entity);
         try
         {
             await _context.SaveChangesAsync();
-            return new ActionResponse<T> { WasSuccess = true, Result = entity };
+            return new ActionResponse<T>
+            {
+                WasSuccess = true,
+                Result = entity
+            };
         }
         catch (DbUpdateException)
         {
-            return new ActionResponse<T> { Message = "Conflicto al actualizar el registro." };
+            return DbUpdateExceptionActionResponse();
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return new ActionResponse<T> { Message = ex.Message };
+            return ExceptionActionRespose(exception);
         }
     }
+
+    private ActionResponse<T> ExceptionActionRespose(Exception exception) => new ActionResponse<T>
+    {
+        Message = exception.Message
+    };
+
+    private ActionResponse<T> DbUpdateExceptionActionResponse() => new ActionResponse<T>
+    {
+        Message = "Ya existe el registro."
+    };
 }

@@ -6,8 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Taller.Shared.Interfaces;
 
-
 namespace Taller.Shared.Entities;
+
 public class City : IEntityWithName
 {
     public int Id { get; set; }

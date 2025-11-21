@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace Taller.Shared.DTOs;
 
-
 public class PaginationDTO
 {
     public int Id { get; set; }

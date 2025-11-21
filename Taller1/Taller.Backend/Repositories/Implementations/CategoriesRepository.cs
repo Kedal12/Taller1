@@ -6,7 +6,6 @@ using Taller.Shared.Responses;
 using Microsoft.EntityFrameworkCore;
 using Taller.Backend.Helpers;
 
-
 namespace Taller.Backend.Repositories.Implementations;
 
 public class CategoriesRepository : GenericRepository<Category>, ICategoriesRepository

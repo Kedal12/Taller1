@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Taller.Shared.Interfaces;
 
 namespace Taller.Shared.Entities;
+
 public class Category : IEntityWithName
 {
     public int Id { get; set; }

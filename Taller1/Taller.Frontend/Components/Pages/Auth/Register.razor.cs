@@ -27,7 +27,6 @@ public partial class Register
     [Inject] private IDialogService DialogService { get; set; } = null!;
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
     [Inject] private IRepository Repository { get; set; } = null!;
-
     [Parameter, SupplyParameterFromQuery] public bool IsAdmin { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -112,7 +111,7 @@ public partial class Register
         await Task.Delay(5);
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            return countries ?? new List<Country>();
+            return countries!;
         }
 
         return countries!
@@ -125,7 +124,7 @@ public partial class Register
         await Task.Delay(5);
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            return states ?? new List<State>();
+            return states!;
         }
 
         return states!
@@ -138,7 +137,7 @@ public partial class Register
         await Task.Delay(5);
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            return cities ?? new List<City>();
+            return cities!;
         }
 
         return cities!
@@ -153,56 +152,36 @@ public partial class Register
 
     private void InvalidForm()
     {
-        Snackbar.Add("Por favor llena todos los campos obligatorios.", Severity.Warning);
+        Snackbar.Add("Por favor llena todos los campos del formulario.", Severity.Warning);
     }
 
-    // --- ESTA ES LA PARTE CRITICA CORREGIDA ---
     private async Task CreateUserAsync()
     {
-        // Validaciones básicas
-        if (string.IsNullOrEmpty(userDTO.Email) || string.IsNullOrEmpty(userDTO.PhoneNumber) || userDTO.CityId == 0)
+        if (userDTO.Email is null || userDTO.PhoneNumber is null)
         {
-            Snackbar.Add("Verifica que el Email, Teléfono y Ciudad estén seleccionados.", Severity.Warning);
+            InvalidForm();
             return;
         }
 
-        userDTO.UserType = IsAdmin ? UserType.Admin : UserType.User;
+        userDTO.UserType = UserType.User;
         userDTO.UserName = userDTO.Email;
 
-        loading = true; // Activar spinner
-
-        try
+        if (IsAdmin)
         {
-            var responseHttp = await Repository.PostAsync<UserDTO, TokenDTO>("/api/accounts/CreateUser", userDTO);
-
-            if (responseHttp.Error)
-            {
-                var message = await responseHttp.GetErrorMessageAsync();
-                Snackbar.Add(message!, Severity.Error);
-                return; // Se va al finally
-            }
-
-            // Verificación de seguridad del Token
-            if (responseHttp.Response is null || string.IsNullOrEmpty(responseHttp.Response.Token))
-            {
-                Snackbar.Add("Registro exitoso, pero no se recibió el token de acceso.", Severity.Error);
-                return; // Se va al finally
-            }
-
-            // Login Exitoso
-            await LoginService.LoginAsync(responseHttp.Response.Token);
-
-            // Usamos forceLoad: true para limpiar caché de auth y evitar errores en la siguiente página
-            NavigationManager.NavigateTo("/", forceLoad: true);
+            userDTO.UserType = UserType.Admin;
         }
-        catch (Exception ex)
+
+        loading = true;
+        var responseHttp = await Repository.PostAsync<UserDTO, TokenDTO>("/api/accounts/CreateUser", userDTO);
+        loading = false;
+        if (responseHttp.Error)
         {
-            Snackbar.Add($"Ocurrió un error inesperado: {ex.Message}", Severity.Error);
+            var message = await responseHttp.GetErrorMessageAsync();
+            Snackbar.Add(message!, Severity.Error);
+            return;
         }
-        finally
-        {
-            // ESTO ASEGURA QUE EL SPINNER SIEMPRE SE APAGUE
-            loading = false;
-        }
+
+        await LoginService.LoginAsync(responseHttp.Response!.Token);
+        NavigationManager.NavigateTo("/");
     }
 }

@@ -104,6 +104,12 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> CreateUser([FromBody] UserDTO model)
     {
         User user = model;
+        if (!string.IsNullOrEmpty(model.Photo))
+        {
+            var photoUser = Convert.FromBase64String(model.Photo);
+            model.Photo = await _fileStorage.SaveFileAsync(photoUser, ".jpg", _container);
+        }
+
         var result = await _usersUnitOfWork.AddUserAsync(user, model.Password);
         if (result.Succeeded)
         {

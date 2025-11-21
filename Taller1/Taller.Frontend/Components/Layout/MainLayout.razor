@@ -1,47 +1,27 @@
 ﻿@inherits LayoutComponentBase
-@using Taller.Frontend.Components.Shared   @* Para que reconozca <AuthLinks /> *@
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
-
 <MudLayout>
     <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu"
-                       Color="Color.Inherit"
-                       Edge="Edge.Start"
-                       OnClick="@((e) => DrawerToggle())" />
-
-        <MudText Typo="Typo.h5" Class="ml-3">Empleados</MudText>
-
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Class="ml-3">Orders</MudText>
         <MudSpacer />
-
-        <MudIconButton Icon="@(DarkLightModeButtonIcon)"
-                       Color="Color.Inherit"
-                       OnClick="@DarkModeToggle" />
-
-        <!-- Igual que en Orders: menú de tres puntos con AuthLinks dentro -->
-        <MudMenu Icon="@Icons.Material.Filled.MoreVert"
-                 Color="Color.Inherit"
-                 ActivationEvent="@MouseEvent.MouseOver"
-                 AnchorOrigin="Origin.BottomRight"
-                 TransformOrigin="Origin.TopRight">
+        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" ActivationEvent="@MouseEvent.MouseOver" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
             <AuthLinks />
         </MudMenu>
     </MudAppBar>
-
-    <MudDrawer id="nav-drawer"
-               @bind-Open="_drawerOpen"
-               ClipMode="DrawerClipMode.Always"
-               Elevation="2">
+    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
     </MudDrawer>
-
     <MudMainContent Class="pt-16 pa-4">
         @Body
     </MudMainContent>
 </MudLayout>
+
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
